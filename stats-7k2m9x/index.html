@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>ADITI · Readers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;800&family=Tiro+Devanagari+Marathi&display=swap">
+<style>
+  /* Layout: four counts up top, one bar per day below. Same palette as the book. */
+  :root { --paper: #f7f5f9; --leaf: #ffffff; --ink: #26233f; --soft: #6c6787; --rule: #e3dfea; --marigold: #c97a07; --kumkum: #a3243b;
+    --ui: "Mukta", system-ui, sans-serif; --display: "Tiro Devanagari Marathi", Georgia, serif; }
+  @media (prefers-color-scheme: dark) { :root { --paper: #17152b; --leaf: #1f1d37; --ink: #ece9f5; --soft: #a9a3c4; --rule: #2e2b4b; --marigold: #f0a73a; --kumkum: #ec8396; color-scheme: dark; } }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--ui); font-size: 16px; line-height: 1.5; }
+  .wrap { max-width: 46rem; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 2.5rem 4rem; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .5rem 1rem; margin-bottom: 1.5rem; }
+  h1 { font-family: var(--display); font-weight: 400; font-size: 2rem; margin: 0; }
+  h1 small { font-family: var(--ui); color: var(--soft); font-size: 1rem; margin-left: .5rem; }
+  .meta { color: var(--soft); font-size: .9rem; }
+  button { font: inherit; font-size: .9rem; color: var(--kumkum); background: none; border: 1px solid var(--rule); border-radius: 4px; padding: .3rem .8rem; cursor: pointer; }
+  button:hover { border-color: var(--kumkum); }
+  button:focus-visible { outline: 2px solid var(--marigold); outline-offset: 2px; }
+  .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem; margin-bottom: 2rem; }
+  .tile { background: var(--leaf); border: 1px solid var(--rule); padding: 1rem 1.1rem; min-width: 0; }
+  .tile .label { color: var(--soft); font-size: .85rem; letter-spacing: .04em; }
+  .tile .num { font-size: 2.2rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--kumkum); }
+  .tile.total .num { color: var(--marigold); }
+  .tile .num.pending { color: var(--soft); font-weight: 400; font-size: 1.2rem; }
+  h2 { font-family: var(--ui); font-weight: 600; font-size: 1.05rem; margin: 0 0 .25rem; }
+  .sub { color: var(--soft); font-size: .9rem; margin: 0 0 1rem; }
+  .chart { background: var(--leaf); border: 1px solid var(--rule); padding: 1rem .75rem .5rem; }
+  .bars { display: grid; grid-template-columns: repeat(30, 1fr); gap: 3px; align-items: end; height: 160px; }
+  .bar { position: relative; background: var(--marigold); border-radius: 2px 2px 0 0; min-height: 2px; opacity: .9; }
+  .bar.zero { background: var(--rule); }
+  .bar.loading { background: var(--rule); opacity: .5; }
+  .bar .v { position: absolute; left: 50%; transform: translateX(-50%); bottom: 100%; font-size: .72rem; color: var(--soft); padding-bottom: 2px; font-variant-numeric: tabular-nums; }
+  .days { display: grid; grid-template-columns: repeat(30, 1fr); gap: 3px; margin-top: .4rem; font-size: .68rem; color: var(--soft); text-align: center; overflow: hidden; }
+  .days span { visibility: hidden; white-space: nowrap; }
+  .days span:nth-child(5n+1), .days span:last-child { visibility: visible; }
+  .note { color: var(--soft); font-size: .85rem; line-height: 1.55; margin-top: 1.5rem; }
+  .err { color: var(--kumkum); font-size: .9rem; margin-top: .75rem; }
+  @media (max-width: 560px) {
+    .tiles { grid-template-columns: repeat(2, 1fr); }
+    .tile .num { font-size: 1.8rem; }
+    .days span:nth-child(5n+1) { visibility: hidden; }
+    .days span:nth-child(10n+1), .days span:last-child { visibility: visible; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>ADITI <small>readers of the book</small></h1>
+    <div class="meta"><span id="updated">Loading…</span> · <button id="refresh" type="button">Refresh</button></div>
+  </header>
+
+  <section class="tiles" aria-label="Totals">
+    <div class="tile total"><div class="label">All readers</div><div class="num pending" id="t-all">…</div></div>
+    <div class="tile"><div class="label">मराठी</div><div class="num pending" id="t-mr">…</div></div>
+    <div class="tile"><div class="label">English</div><div class="num pending" id="t-en">…</div></div>
+    <div class="tile"><div class="label">हिंदी</div><div class="num pending" id="t-hi">…</div></div>
+  </section>
+
+  <h2>Readers per day</h2>
+  <p class="sub">Last 30 days, all languages together, Indian time.</p>
+  <div class="chart">
+    <div class="bars" id="bars" aria-label="Readers per day"></div>
+    <div class="days" id="days"></div>
+  </div>
+  <div class="err" id="err" hidden></div>
+
+  <p class="note">A reader is counted once per language per day in the same browser, so refreshing or reopening the page the same day does not add to the count. Counting began on 3 November 2026. Numbers are page views recorded by the book's pages; they do not identify anyone.</p>
+</div>
+
+<script>
+(function () {
+  var NS = 'aditi-vp-7k2m9x';
+  var API = 'https://abacus.jasoncameron.dev/get/' + NS + '/';
+  var GAP = 400; // ms between reads: the service allows 30 requests per 10 seconds
+  var $ = function (id) { return document.getElementById(id); };
+  var fmt = function (n) { return n.toLocaleString('en-IN'); };
+
+  function istDate(offsetDays) {
+    var d = new Date(Date.now() + 330 * 60000 - offsetDays * 86400000);
+    return d.toISOString().slice(0, 10);
+  }
+  function read(key) {
+    return fetch(API + key).then(function (r) {
+      if (r.status === 404) return 0;
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json().then(function (j) { return Number(j.value) || 0; });
+    });
+  }
+  function sleep(ms) { return new Promise(function (res) { setTimeout(res, ms); }); }
+
+  var running = false;
+  function load() {
+    if (running) return;
+    running = true;
+    $('err').hidden = true;
+    $('updated').textContent = 'Loading…';
+    var bars = $('bars'), days = $('days');
+    bars.innerHTML = ''; days.innerHTML = '';
+    var dates = [];
+    for (var i = 29; i >= 0; i--) dates.push(istDate(i));
+    dates.forEach(function (d) {
+      var b = document.createElement('div'); b.className = 'bar loading'; b.dataset.date = d; bars.appendChild(b);
+      var s = document.createElement('span'); s.textContent = d.slice(8, 10) + '/' + d.slice(5, 7); days.appendChild(s);
+    });
+    var totals = { mr: 0, en: 0, hi: 0 };
+    var KEY = { mr: 'marathi', en: 'english', hi: 'hindi' };
+    var seq = Promise.resolve();
+    ['mr', 'en', 'hi'].forEach(function (lang) {
+      seq = seq.then(function () { return read(KEY[lang]); }).then(function (v) {
+        totals[lang] = v;
+        var el = $('t-' + lang); el.textContent = fmt(v); el.classList.remove('pending');
+      }).then(function () { return sleep(GAP); });
+    });
+    seq = seq.then(function () {
+      var el = $('t-all'); el.textContent = fmt(totals.mr + totals.en + totals.hi); el.classList.remove('pending');
+    });
+    var values = [];
+    dates.forEach(function (d, idx) {
+      seq = seq.then(function () { return read('d-' + d.replace(/-/g, '')); }).then(function (v) {
+        values[idx] = v;
+        draw(bars, values, dates);
+      }).then(function () { return sleep(GAP); });
+    });
+    seq.then(function () {
+      $('updated').textContent = 'Updated ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    }).catch(function (e) {
+      $('err').hidden = false;
+      $('err').textContent = 'Could not read the counter (' + e.message + '). Try Refresh in a few seconds.';
+      $('updated').textContent = 'Not updated';
+    }).then(function () { running = false; });
+  }
+  function draw(bars, values, dates) {
+    var max = Math.max(1, Math.max.apply(null, values.filter(function (v) { return typeof v === 'number'; })));
+    Array.prototype.forEach.call(bars.children, function (b, idx) {
+      var v = values[idx];
+      if (typeof v !== 'number') return;
+      b.classList.remove('loading');
+      b.classList.toggle('zero', v === 0);
+      b.style.height = v === 0 ? '2px' : Math.max(4, Math.round(v / max * 150)) + 'px';
+      b.title = dates[idx] + ': ' + v;
+      if (v > 0 && !b.firstChild) { var s = document.createElement('span'); s.className = 'v'; s.textContent = v; b.appendChild(s); }
+    });
+  }
+  $('refresh').addEventListener('click', load);
+  load();
+  setInterval(load, 5 * 60 * 1000);
+})();
+</script>
+</body>
+</html>
