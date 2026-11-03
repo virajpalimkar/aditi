@@ -9,10 +9,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;800&family=Tiro+Devanagari+Marathi&display=swap">
 <style>
-  /* Layout: four counts up top, one bar per day below. Same palette as the book. */
-  :root { --paper: #f7f5f9; --leaf: #ffffff; --ink: #26233f; --soft: #6c6787; --rule: #e3dfea; --marigold: #c97a07; --kumkum: #a3243b;
+  /* Layout: totals, then a day chart, then three tables: parts of the book, posts, places. Same palette as the book. */
+  :root { --paper: #f7f5f9; --leaf: #ffffff; --ink: #26233f; --soft: #6c6787; --rule: #e3dfea; --marigold: #c97a07; --kumkum: #a3243b; --fill: #f1e3cf;
     --ui: "Mukta", system-ui, sans-serif; --display: "Tiro Devanagari Marathi", Georgia, serif; }
-  @media (prefers-color-scheme: dark) { :root { --paper: #17152b; --leaf: #1f1d37; --ink: #ece9f5; --soft: #a9a3c4; --rule: #2e2b4b; --marigold: #f0a73a; --kumkum: #ec8396; color-scheme: dark; } }
+  @media (prefers-color-scheme: dark) { :root { --paper: #17152b; --leaf: #1f1d37; --ink: #ece9f5; --soft: #a9a3c4; --rule: #2e2b4b; --marigold: #f0a73a; --kumkum: #ec8396; --fill: #3a3150; color-scheme: dark; } }
   body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--ui); font-size: 16px; line-height: 1.5; }
   .wrap { max-width: 46rem; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 2.5rem 4rem; }
   header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .5rem 1rem; margin-bottom: 1.5rem; }
@@ -28,8 +28,8 @@
   .tile .num { font-size: 2.2rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--kumkum); }
   .tile.total .num { color: var(--marigold); }
   .tile .num.pending { color: var(--soft); font-weight: 400; font-size: 1.2rem; }
-  h2 { font-family: var(--ui); font-weight: 600; font-size: 1.05rem; margin: 0 0 .25rem; }
-  .sub { color: var(--soft); font-size: .9rem; margin: 0 0 1rem; }
+  h2 { font-family: var(--ui); font-weight: 600; font-size: 1.05rem; margin: 2.25rem 0 .25rem; }
+  .sub { color: var(--soft); font-size: .9rem; margin: 0 0 .9rem; }
   .chart { background: var(--leaf); border: 1px solid var(--rule); padding: 1rem .75rem .5rem; }
   .bars { display: grid; grid-template-columns: repeat(30, 1fr); gap: 3px; align-items: end; height: 160px; }
   .bar { position: relative; background: var(--marigold); border-radius: 2px 2px 0 0; min-height: 2px; opacity: .9; }
@@ -39,13 +39,27 @@
   .days { display: grid; grid-template-columns: repeat(30, 1fr); gap: 3px; margin-top: .4rem; font-size: .68rem; color: var(--soft); text-align: center; overflow: hidden; }
   .days span { visibility: hidden; white-space: nowrap; }
   .days span:nth-child(5n+1), .days span:last-child { visibility: visible; }
-  .note { color: var(--soft); font-size: .85rem; line-height: 1.55; margin-top: 1.5rem; }
+  table { width: 100%; border-collapse: collapse; background: var(--leaf); border: 1px solid var(--rule); font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: .55rem .75rem; border-top: 1px solid var(--rule); vertical-align: top; }
+  th { font-weight: 600; font-size: .82rem; color: var(--soft); letter-spacing: .03em; border-top: 0; }
+  td.n, th.n { text-align: right; white-space: nowrap; }
+  td .mr { font-family: var(--display); font-size: 1.05rem; }
+  td .en { color: var(--soft); font-size: .85rem; }
+  .rowbar { height: 6px; background: var(--fill); border-radius: 3px; margin-top: .35rem; overflow: hidden; }
+  .rowbar i { display: block; height: 100%; background: var(--marigold); width: 0; }
+  td .post { display: block; font-family: var(--display); font-size: 1rem; line-height: 1.45; overflow-wrap: anywhere; }
+  td .date { color: var(--soft); font-size: .8rem; }
+  .empty { color: var(--soft); font-size: .9rem; padding: .75rem; background: var(--leaf); border: 1px solid var(--rule); }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+  .note { color: var(--soft); font-size: .85rem; line-height: 1.55; margin-top: 2rem; }
   .err { color: var(--kumkum); font-size: .9rem; margin-top: .75rem; }
   @media (max-width: 560px) {
     .tiles { grid-template-columns: repeat(2, 1fr); }
     .tile .num { font-size: 1.8rem; }
     .days span:nth-child(5n+1) { visibility: hidden; }
     .days span:nth-child(10n+1), .days span:last-child { visibility: visible; }
+    .two { grid-template-columns: 1fr; }
+    th, td { padding: .5rem .5rem; }
   }
 </style>
 </head>
@@ -63,37 +77,64 @@
     <div class="tile"><div class="label">हिंदी</div><div class="num pending" id="t-hi">…</div></div>
   </section>
 
-  <h2>Readers per day</h2>
+  <h2 style="margin-top:0">Readers per day</h2>
   <p class="sub">Last 30 days, all languages together, Indian time.</p>
   <div class="chart">
     <div class="bars" id="bars" aria-label="Readers per day"></div>
     <div class="days" id="days"></div>
   </div>
-  <div class="err" id="err" hidden></div>
 
-  <p class="note">A reader is counted once per language per day in the same browser, so refreshing or reopening the page the same day does not add to the count. Counting began on 3 November 2026. Numbers are page views recorded by the book's pages; they do not identify anyone.</p>
+  <h2>Where readers spend their time</h2>
+  <p class="sub">Readers who reached each part of the book, and the reading time spent there. Marathi page.</p>
+  <table id="parts">
+    <thead><tr><th>Part</th><th class="n">Readers</th><th class="n">Minutes</th><th class="n">Per reader</th></tr></thead>
+    <tbody id="parts-body"></tbody>
+  </table>
+
+  <h2>Most read posts</h2>
+  <p class="sub">Posts kept on screen for at least 5 seconds. The ten most read, with how many readers read each.</p>
+  <div id="posts-wrap"><div class="empty" id="posts-empty">Loading posts…</div><table id="posts" hidden><thead><tr><th>Post</th><th class="n">Readers</th></tr></thead><tbody id="posts-body"></tbody></table></div>
+
+  <h2>Where readers are</h2>
+  <p class="sub">From the reader's connection, city for India and country elsewhere. One count per reader per day.</p>
+  <div class="two">
+    <div><table id="cities"><thead><tr><th>City</th><th class="n">Readers</th></tr></thead><tbody id="cities-body"><tr><td colspan="2" class="en">Loading…</td></tr></tbody></table></div>
+    <div><table id="countries"><thead><tr><th>Country</th><th class="n">Readers</th></tr></thead><tbody id="countries-body"><tr><td colspan="2" class="en">Loading…</td></tr></tbody></table></div>
+  </div>
+
+  <div class="err" id="err" hidden></div>
+  <p class="note" id="progress"></p>
+  <p class="note">A reader is counted once per language per day in the same browser, so refreshing or reopening the page the same day does not add to the count. Reading time is counted in 10-second steps while the reader is active on the page, so an open but idle tab adds nothing. City comes from an IP lookup and is kept only as a count. Counting began on 3 November 2026; parts, posts and places from later that day. Nothing here identifies anyone.</p>
 </div>
 
 <script>
 (function () {
   var NS = 'aditi-vp-7k2m9x';
   var API = 'https://abacus.jasoncameron.dev/get/' + NS + '/';
-  var GAP = 400; // ms between reads: the service allows 30 requests per 10 seconds
+  var GAP = 400; // ms between reads: the counter service allows 30 requests per 10 seconds
+  var PARTS = [{"key": "title", "mr": "ADITI, मुखपृष्ठ", "en": "Title page and cover"}, {"key": "son", "mr": "विरजकडून", "en": "From her son"}, {"key": "viraj", "mr": "विरजसाठी", "en": "For Viraj"}, {"key": "series", "mr": "काही मनातलं", "en": "The series"}, {"key": "letters", "mr": "तुझ्यासाठी लिहिलेलं", "en": "Written for you"}, {"key": "voice", "mr": "तिचा आवाज", "en": "Her voice"}, {"key": "map", "mr": "आठवणींचा नकाशा", "en": "Memory map"}];
+  var POSTS = [{"id": "1023850177698045", "date": "16 April 2016", "label": "मातृत्व एक सुंदर, अलवार भावना ज्यात जीवनाच सार सामावल आहे .... ह्या भि…", "part": "Written for you"}, {"id": "1317835951632798", "date": "5 March 2017", "label": "खरंच मजा येतेय...खूप दिवसांनी संघर्ष करावा लागतोय जो जीवन समृद्ध होण्य…", "part": "Written for you"}, {"id": "1473541949395530", "date": "2 August 2017", "label": "happy birthday viraj ..... तुझ आणि माझ नातं केवळ 23 वर्षातच बदललंय ना …", "part": "Written for you"}, {"id": "1747743611975361", "date": "13 May 2018", "label": "तुझ्यामुळे मिळालेल्या मातृत्व सुखासाठी तुला कोटी कोटी धन्यवाद ! ! ! ! …", "part": "Written for you"}, {"id": "2414526725297043", "date": "2 August 2019", "label": "HAPPY BIRTHDAY DEAR जिवनातील अंतिम सत्य बदल आहे ....आणि तो तुझ्या रूपा…", "part": "Written for you"}, {"id": "3709121515837551", "date": "26 January 2021", "label": "#माझा_मुलगा_माझा_अभिमान विरज त्याचं नाव...त्याला घडवतानाच तो नकळतपणे म…", "part": "Written for you"}, {"id": "4235234976559533", "date": "31 July 2021", "label": "शेवटी आज हो नाही करता करता आमच्या पदरात वाढदिवसाची भेट वस्तू पडली चिरं…", "part": "Written for you"}, {"id": "6474263395990002", "date": "2 August 2023", "label": "कोणालाही माझ्या बद्दल अतिशय हेवा वाटायला लावणारी एकमेव गोष्ट माझ्याकडे…", "part": "Written for you"}, {"id": "6883407055075632", "date": "24 November 2023", "label": "लेकराच्या भक्कम खांद्याचा आधार.... सर्वाधिक सुरक्षित", "part": "Written for you"}, {"id": "7977423695673957", "date": "2 August 2024", "label": "Happy Birthday BETA [गाण्याच्या ओळी] [गाण्याच्या ओळी] जन्मोजन्मी हाच म…", "part": "Written for you"}, {"id": "24129003933422676", "date": "2 August 2025", "label": "प्रिय विरज, Happy Birthday beta तुझा आज वाढदिवस... तू कायम खूप आनंदी, …", "part": "Written for you"}, {"id": "24132243176432085", "date": "2 August 2025", "label": "श्री स्वामी समर्थ महाराजांच्या कृपाशीर्वादाने विरज कायम अत्यंत तृप्त, …", "part": "Written for you"}, {"id": "27705185825804451", "date": "2 August 2026", "label": "आज का किस्सा.... साल 1994 आज ही के दिन शाम के छ साडे छह बजे मैं कॉरीडो…", "part": "Written for you"}, {"id": "md1", "date": "10 July 2017", "label": "आपल्या वर एखादा मोठा आघात झाला आणि त्याच क्षणी मेंदू तल्लख होऊन सचेत क…", "part": "काही मनातलं"}, {"id": "2272363759513341", "date": "12 May 2019", "label": "आई ...... तुझेही लाड करायचे असतात ....तुलाही ते हवेसे वाटतात हे कळण्या…", "part": "काही मनातलं"}, {"id": "md2", "date": "26 May 2019", "label": "एकदमच असं काहीतरी घडतं की जिथे तुम्ही सैरभैर होता ....अत्यंत साध्या गो…", "part": "काही मनातलं"}, {"id": "md3", "date": "10 June 2019", "label": "मनांत इतकं कांही येतं असतं की काय, कसं आणि किती मांडायचं हा ही मोठा प्…", "part": "काही मनातलं"}, {"id": "3196605313755843", "date": "26 July 2020", "label": "काल माझ्या जीवनातील नवीन पर्वाला सुरुवात झाली...काल लौकिकार्थाने ५० वा…", "part": "काही मनातलं"}, {"id": "md6", "date": "2 January 2021", "label": "प्रत्येकाच्या जीवनात अनेक गोष्टी ठरवल्या प्रमाणे घडतात आणि अनेक गोष्टी…", "part": "काही मनातलं"}, {"id": "3851698058246562", "date": "20 March 2021", "label": "Pure soul.... एकच दुर्गुण...अतिचांगुलपणा... तिचं अस्तित्व माझी सावली ह…", "part": "काही मनातलं"}, {"id": "3864884190261282", "date": "25 March 2021", "label": "क्षण कापुरासारखा उडून गेला... सोबतीही अर्ध्यावरती सोडून गेला... श्वास …", "part": "काही मनातलं"}, {"id": "md8", "date": "21 June 2021", "label": "आपला कर्मफलसिद्धांत किंवा प्राक्तन या दोन संकल्पना या जेव्हा एखादी गोष…", "part": "काही मनातलं"}, {"id": "md7", "date": "date unknown", "label": "जर-तरचा तुम्ही खूप विचार करता, तुम्हाला वाटत असतं तुम्ही खूप काही करु …", "part": "काही मनातलं"}, {"id": "4174094092673622", "date": "10 July 2021", "label": "कोरोना वॅक्सीनच्या शोधाच्या वाटेपासून, माझ्या वयोगटाच्या अंतर्भूत होण्…", "part": "काही मनातलं"}, {"id": "md9", "date": "10 July 2021", "label": "पुन्हा एकदा एक आठवण डुबूक करून वर आली मन तर मनच आहे ते तर कायमच संवाद …", "part": "काही मनातलं"}, {"id": "4182660581816973", "date": "13 July 2021", "label": "आज सहजच एक किस्सा आठवला म्हणून आलेय तुम्हाला सांगायला खूप वर्षांपूर्वी…", "part": "काही मनातलं"}, {"id": "md11", "date": "17 July 2021", "label": "आज एका सखीशी संवाद झाला त्यात ती म्हणाली माझ्या सद्गुरुंशिवाय मी इतर क…", "part": "काही मनातलं"}, {"id": "4210341615715536", "date": "23 July 2021", "label": "आई एकमेव अशी होती की माझ्या जाणिवा जागृत होण्याआधी माझ्या जीवनात आली..…", "part": "काही मनातलं"}, {"id": "md12", "date": "18 August 2021", "label": "आज थोडं आळसावलय मन... सकाळी वाटलं आळसदादाने घट्ट मिठी मारलीय ती तो सोड…", "part": "काही मनातलं"}, {"id": "4351360271613669", "date": "8 September 2021", "label": "आज ऊर भरून आलाय... खूप खूप भरुन आलाय... डोळ्यातलं पाणी थांबत नाहीये...…", "part": "काही मनातलं"}, {"id": "md13", "date": "7 August 2022", "label": "जेव्हा एखादी दैवी देणगी तुम्हाला जन्मजात मिळते त्यासोबत काळाबरोबर काही…", "part": "काही मनातलं"}, {"id": "md14", "date": "6 May 2023", "label": "अशात मनाची आणि माणसाची अजून एक बाजू लक्षात येतेय... स्वतःच्याच निरक्षण…", "part": "काही मनातलं"}, {"id": "8077187935697532", "date": "19 August 2024", "label": "आजचा राखी पौर्णिमेचा दिवस खूपच विशेष ठरला. केवळ दिड दिवसासाठीच पण भाऊ …", "part": "काही मनातलं"}, {"id": "md15", "date": "28 July 2025", "label": "आज खूप तिव्रतेने जाणिव झाली की सध्या मी ज्या प्रकारचं आयुष्य जगतेय तसं…", "part": "काही मनातलं"}, {"id": "md16", "date": "5 September 2025", "label": "आज आईंची म्हणजेच सासूबाईंची खूप आठवण येतेय. मैत्रीणीशी बोलत होते तेव्ह…", "part": "काही मनातलं"}, {"id": "3345404692209237", "date": "14 September 2020", "label": "अरुणा ताई म्हणजे अरुणा टोपरे मुळे मला संपदा जोगळेकर कुलकर्णी चं अभिवाच…", "part": "Her voice"}, {"id": "3748043635278672", "date": "11 February 2021", "label": "काल संध्याकाळी माझ्या यु ट्यूब चॅनलने पाचशे सबस्क्राईबरचा टप्पा ओलांडल…", "part": "Her voice"}];
+  var CITIES = [{"key": "parbhani", "name": "Parbhani"}, {"key": "nanded", "name": "Nanded"}, {"key": "latur", "name": "Latur"}, {"key": "jalna", "name": "Jalna"}, {"key": "hingoli", "name": "Hingoli"}, {"key": "beed", "name": "Beed"}, {"key": "aurangabad", "name": "Chhatrapati Sambhajinagar (Aurangabad)"}, {"key": "nagpur", "name": "Nagpur"}, {"key": "pune", "name": "Pune"}, {"key": "mumbai", "name": "Mumbai and Thane"}, {"key": "nashik", "name": "Nashik"}, {"key": "kolhapur", "name": "Kolhapur"}, {"key": "solapur", "name": "Solapur"}, {"key": "satara", "name": "Satara"}, {"key": "sangli", "name": "Sangli"}, {"key": "amravati", "name": "Amravati"}, {"key": "akola", "name": "Akola"}, {"key": "ahmednagar", "name": "Ahilyanagar (Ahmednagar)"}, {"key": "bangalore", "name": "Bengaluru"}, {"key": "hyderabad", "name": "Hyderabad"}, {"key": "chennai", "name": "Chennai"}, {"key": "delhi", "name": "Delhi NCR"}, {"key": "kolkata", "name": "Kolkata"}, {"key": "ahmedabad", "name": "Ahmedabad"}, {"key": "surat", "name": "Surat"}, {"key": "indore", "name": "Indore"}, {"key": "bhopal", "name": "Bhopal"}, {"key": "jaipur", "name": "Jaipur"}, {"key": "goa", "name": "Goa"}, {"key": "kochi", "name": "Kochi"}, {"key": "other-in", "name": "Other places in India"}];
+  var COUNTRIES = [{"key": "in", "name": "India"}, {"key": "us", "name": "United States"}, {"key": "gb", "name": "United Kingdom"}, {"key": "ae", "name": "UAE"}, {"key": "au", "name": "Australia"}, {"key": "ca", "name": "Canada"}, {"key": "de", "name": "Germany"}, {"key": "sg", "name": "Singapore"}, {"key": "nz", "name": "New Zealand"}, {"key": "qa", "name": "Qatar"}, {"key": "sa", "name": "Saudi Arabia"}, {"key": "nl", "name": "Netherlands"}, {"key": "om", "name": "Oman"}, {"key": "kw", "name": "Kuwait"}, {"key": "other", "name": "Other countries"}];
   var $ = function (id) { return document.getElementById(id); };
   var fmt = function (n) { return n.toLocaleString('en-IN'); };
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
 
-  function istDate(offsetDays) {
-    var d = new Date(Date.now() + 330 * 60000 - offsetDays * 86400000);
-    return d.toISOString().slice(0, 10);
-  }
-  function read(key) {
+  function istDate(offsetDays) { return new Date(Date.now() + 330 * 60000 - offsetDays * 86400000).toISOString().slice(0, 10); }
+  function read(key, attempt) {
+    attempt = attempt || 1;
     return fetch(API + key).then(function (r) {
       if (r.status === 404) return 0;
+      if (r.status === 429 && attempt <= 3) {            // rate limited: wait out the 10-second window, then retry
+        progress('Waiting for the counter service…');
+        return sleep(6000).then(function () { return read(key, attempt + 1); });
+      }
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json().then(function (j) { return Number(j.value) || 0; });
     });
   }
   function sleep(ms) { return new Promise(function (res) { setTimeout(res, ms); }); }
+  function progress(text) { $('progress').textContent = text; }
 
   var running = false;
   function load() {
@@ -101,43 +142,70 @@
     running = true;
     $('err').hidden = true;
     $('updated').textContent = 'Loading…';
-    var bars = $('bars'), days = $('days');
-    bars.innerHTML = ''; days.innerHTML = '';
-    var dates = [];
-    for (var i = 29; i >= 0; i--) dates.push(istDate(i));
-    dates.forEach(function (d) {
-      var b = document.createElement('div'); b.className = 'bar loading'; b.dataset.date = d; bars.appendChild(b);
-      var s = document.createElement('span'); s.textContent = d.slice(8, 10) + '/' + d.slice(5, 7); days.appendChild(s);
-    });
-    var totals = { mr: 0, en: 0, hi: 0 };
-    var KEY = { mr: 'marathi', en: 'english', hi: 'hindi' };
     var seq = Promise.resolve();
+    function step(key, fn, label) {
+      seq = seq.then(function () { if (label) progress(label); return read(key); }).then(fn).then(function () { return sleep(GAP); });
+    }
+
+    // totals
+    var totals = { mr: 0, en: 0, hi: 0 }, KEY = { mr: 'marathi', en: 'english', hi: 'hindi' };
     ['mr', 'en', 'hi'].forEach(function (lang) {
-      seq = seq.then(function () { return read(KEY[lang]); }).then(function (v) {
-        totals[lang] = v;
-        var el = $('t-' + lang); el.textContent = fmt(v); el.classList.remove('pending');
-      }).then(function () { return sleep(GAP); });
+      step(KEY[lang], function (v) { totals[lang] = v; var el = $('t-' + lang); el.textContent = fmt(v); el.classList.remove('pending'); }, 'Loading totals…');
     });
-    seq = seq.then(function () {
-      var el = $('t-all'); el.textContent = fmt(totals.mr + totals.en + totals.hi); el.classList.remove('pending');
+    seq = seq.then(function () { var el = $('t-all'); el.textContent = fmt(totals.mr + totals.en + totals.hi); el.classList.remove('pending'); });
+
+    // days
+    var bars = $('bars'), days = $('days'); bars.innerHTML = ''; days.innerHTML = '';
+    var dates = []; for (var i = 29; i >= 0; i--) dates.push(istDate(i));
+    dates.forEach(function (d) {
+      var b = document.createElement('div'); b.className = 'bar loading'; bars.appendChild(b);
+      var s = document.createElement('span'); s.textContent = d.slice(8, 10) + '/' + d.slice(5, 7); days.appendChild(s);
     });
     var values = [];
     dates.forEach(function (d, idx) {
-      seq = seq.then(function () { return read('d-' + d.replace(/-/g, '')); }).then(function (v) {
-        values[idx] = v;
-        draw(bars, values, dates);
-      }).then(function () { return sleep(GAP); });
+      step('d-' + d.replace(/-/g, ''), function (v) { values[idx] = v; drawBars(bars, values, dates); }, 'Loading days… ' + (idx + 1) + '/30');
     });
+
+    // parts
+    var pbody = $('parts-body'); pbody.innerHTML = '';
+    var prow = {};
+    PARTS.forEach(function (p) {
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td><span class="mr">' + esc(p.mr) + '</span><br><span class="en">' + esc(p.en) + '</span><div class="rowbar"><i></i></div></td><td class="n">…</td><td class="n">…</td><td class="n">…</td>';
+      pbody.appendChild(tr); prow[p.key] = { tr: tr, readers: 0, ticks: 0 };
+    });
+    PARTS.forEach(function (p, idx) {
+      step('s-' + p.key, function (v) { prow[p.key].readers = v; }, 'Loading parts… ' + (idx + 1) + '/' + PARTS.length);
+      step('t-' + p.key, function (v) { prow[p.key].ticks = v; drawParts(prow); });
+    });
+
+    // posts
+    var pcount = {};
+    POSTS.forEach(function (p, idx) {
+      step('p-' + p.id, function (v) { pcount[p.id] = v; }, 'Loading posts… ' + (idx + 1) + '/' + POSTS.length);
+    });
+    seq = seq.then(function () { drawPosts(pcount); });
+
+    // places
+    var ccount = {}, ncount = {};
+    CITIES.forEach(function (c, idx) { step('city-' + c.key, function (v) { ccount[c.key] = v; }, 'Loading places… ' + (idx + 1) + '/' + (CITIES.length + COUNTRIES.length)); });
+    COUNTRIES.forEach(function (c, idx) { step('c-' + c.key, function (v) { ncount[c.key] = v; }, 'Loading places… ' + (CITIES.length + idx + 1) + '/' + (CITIES.length + COUNTRIES.length)); });
+    seq = seq.then(function () { drawPlaces(ccount, ncount); });
+
     seq.then(function () {
+      progress('');
       $('updated').textContent = 'Updated ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
     }).catch(function (e) {
       $('err').hidden = false;
       $('err').textContent = 'Could not read the counter (' + e.message + '). Try Refresh in a few seconds.';
       $('updated').textContent = 'Not updated';
+      progress('');
     }).then(function () { running = false; });
   }
-  function draw(bars, values, dates) {
-    var max = Math.max(1, Math.max.apply(null, values.filter(function (v) { return typeof v === 'number'; })));
+
+  function drawBars(bars, values, dates) {
+    var nums = values.filter(function (v) { return typeof v === 'number'; });
+    var max = Math.max(1, Math.max.apply(null, nums.length ? nums : [0]));
     Array.prototype.forEach.call(bars.children, function (b, idx) {
       var v = values[idx];
       if (typeof v !== 'number') return;
@@ -148,9 +216,49 @@
       if (v > 0 && !b.firstChild) { var s = document.createElement('span'); s.className = 'v'; s.textContent = v; b.appendChild(s); }
     });
   }
+  function drawParts(prow) {
+    var maxMin = 0;
+    Object.keys(prow).forEach(function (k) { maxMin = Math.max(maxMin, prow[k].ticks * 10 / 60); });
+    Object.keys(prow).forEach(function (k) {
+      var r = prow[k], tds = r.tr.querySelectorAll('td'), mins = r.ticks * 10 / 60;
+      tds[1].textContent = fmt(r.readers);
+      tds[2].textContent = mins < 1 && mins > 0 ? '<1' : fmt(Math.round(mins));
+      tds[3].textContent = r.readers ? (mins / r.readers).toFixed(1) + ' min' : '–';
+      r.tr.querySelector('.rowbar i').style.width = maxMin ? Math.round(mins / maxMin * 100) + '%' : '0%';
+    });
+  }
+  function drawPosts(pcount) {
+    var rows = POSTS.map(function (p) { return { p: p, n: pcount[p.id] || 0 }; }).filter(function (r) { return r.n > 0; })
+      .sort(function (a, b) { return b.n - a.n; }).slice(0, 10);
+    var body = $('posts-body'); body.innerHTML = '';
+    if (!rows.length) { $('posts-empty').textContent = 'No post has been read for 5 seconds yet.'; $('posts').hidden = true; return; }
+    $('posts-empty').hidden = true; $('posts').hidden = false;
+    var max = rows[0].n;
+    rows.forEach(function (r) {
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td><span class="post">' + esc(r.p.label) + '</span><span class="date">' + esc(r.p.date) + ' · ' + esc(r.p.part) + '</span><div class="rowbar"><i style="width:' + Math.round(r.n / max * 100) + '%"></i></div></td><td class="n">' + fmt(r.n) + '</td>';
+      body.appendChild(tr);
+    });
+  }
+  function drawPlaces(ccount, ncount) {
+    function fill(bodyId, list, counts) {
+      var rows = list.map(function (c) { return { c: c, n: counts[c.key] || 0 }; }).filter(function (r) { return r.n > 0; }).sort(function (a, b) { return b.n - a.n; });
+      var body = $(bodyId); body.innerHTML = '';
+      if (!rows.length) { body.innerHTML = '<tr><td colspan="2" class="en">Nothing counted yet.</td></tr>'; return; }
+      var max = rows[0].n;
+      rows.forEach(function (r) {
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td>' + esc(r.c.name) + '<div class="rowbar"><i style="width:' + Math.round(r.n / max * 100) + '%"></i></div></td><td class="n">' + fmt(r.n) + '</td>';
+        body.appendChild(tr);
+      });
+    }
+    fill('cities-body', CITIES, ccount);
+    fill('countries-body', COUNTRIES, ncount);
+  }
+
   $('refresh').addEventListener('click', load);
   load();
-  setInterval(load, 5 * 60 * 1000);
+  setInterval(load, 10 * 60 * 1000);
 })();
 </script>
 </body>
