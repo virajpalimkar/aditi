@@ -36,6 +36,12 @@
   a { color: var(--kumkum); }
   a:focus-visible { outline: 2px solid var(--marigold); outline-offset: 3px; }
 
+  /* language bar: Marathi is the default page; the other two editions are a tap away */
+  .langbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; display: flex; justify-content: center; gap: 1.5rem; padding: .65rem 0; background: var(--paper); border-bottom: 1px solid var(--rule); font-family: var(--ui); font-size: .95rem; }
+  .langbar a { color: var(--soft); text-decoration: none; padding: .1rem .2rem .2rem; border-bottom: 2px solid transparent; }
+  .langbar a.on { color: var(--kumkum); font-weight: 600; border-bottom-color: var(--marigold); }
+  .langbar a:hover { color: var(--ink); }
+
   /* title page: the name and the poem together */
   .titlepage { min-height: 86vh; display: grid; place-content: center; justify-items: center; text-align: center; gap: 2.75rem; padding-block: 3rem; border-bottom: 1px solid var(--rule); }
   .bookname { font-family: var(--ui); font-weight: 800; font-size: clamp(4.2rem, 21vw, 9.5rem); letter-spacing: .1em; margin: 0 0 0 .1em; line-height: 1; color: var(--kumkum);
@@ -128,7 +134,7 @@
   @page { margin: 18mm 16mm 20mm; @bottom-center { content: counter(page); font-family: "Mukta", system-ui, sans-serif; font-size: 10pt; color: #6c6787; } }
   @page :first { @bottom-center { content: none; } }
   @media print {
-    nav.toc { display: none; }
+    nav.toc, .langbar { display: none; }
     .titlepage { min-height: 88vh; border-bottom: 0; break-after: page; }
     .bookname { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .cover { break-before: page; }
@@ -139,6 +145,7 @@
 </style>
 
 <div class="wrap">
+  <nav class="langbar" aria-label="Language"><a href="./" lang="mr" class="on">मराठी</a><a href="en/" lang="en">English</a><a href="hi/" lang="hi">हिंदी</a></nav>
   <section class="titlepage" aria-label="Title">
     <h1 class="bookname">ADITI</h1>
     <div class="poem" lang="mr">नभासारखी अथांग जिची प्रीती,<br>तेजाची ती एक नवल ज्योती,<br>बंधनांना छेदून जी पुढे जाते,<br>त्या असीम अस्तित्वाचे नाव 'अदिती'...</div>
